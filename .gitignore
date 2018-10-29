@@ -1,0 +1,7 @@
+*
+
+!.gitignore
+!logo.png
+!.git/
+!ping.go
+!README.md

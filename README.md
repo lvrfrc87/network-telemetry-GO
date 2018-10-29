@@ -1,1 +1,1 @@
-Playing around and trying to learn go.
+Translating some python code in golang (..or at least, I am trying to!)
