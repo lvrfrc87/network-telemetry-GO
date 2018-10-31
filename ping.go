@@ -1,3 +1,7 @@
+/*
+https://zaiste.net/executing_commands_via_ssh_using_go/
+https://godoc.org/golang.org/x/crypto/ssh#example-PublicKeys
+*/
 package main
 
 import (
@@ -9,14 +13,24 @@ import (
 )
 
 func main() {
-  cmd := "ping -c 1 8.8.8.8"
+  // define variables
+  cmd := "ping -c 1 10.78.65.1"
+  port := "22"
+  user := "core"
   hosts := []string {
-    "ec2-3-8-77-175.eu-west-2.compute.amazonaws.com",
+    "app1.net.awsieprod2.linsys.tmcs",
+    "app2.net.awsieprod2.linsys.tmcs",
+    "app3.net.awsieprod2.linsys.tmcs",
+    "app1.net.awsdeprod2.linsys.tmcs",
+    "app2.net.awsdeprod2.linsys.tmcs",
+    "app3.net.awsdeprod2.linsys.tmcs",
   }
+  // create go routine channel
+  // https://tour.golang.org/concurrency/2
   results := make(chan string, 10)
 
   // read the private key
-  key, err := ioutil.ReadFile("/Users/federicoolivieri/Downloads/olivierif.pem")
+  key, err := ioutil.ReadFile("/Users/federicoolivieri/.ssh/id_rsa")
   if err != nil {
     log.Fatalf("unable to read private key: %v", err)
     }
@@ -25,7 +39,9 @@ func main() {
   if err != nil {
       log.Fatalf("unable to parse private key: %v", err)
   }
+  // set-up ssh connection
   config := &ssh.ClientConfig{
+    User: user,
     Auth: []ssh.AuthMethod{
       ssh.PublicKeys(singer),},
     // var hostKey ssh.PublicKey
@@ -35,7 +51,7 @@ func main() {
 
   for _, hostname := range hosts {
     go func(hostname string) {
-      results <- executeCmd(cmd, hostname, config)
+      results <- executeCmd(cmd, port, hostname, config)
     }(hostname)
   }
 
@@ -47,8 +63,8 @@ func main() {
     }
 }
 
-func executeCmd(command, hostname string, config *ssh.ClientConfig) string {
-  client, err := ssh.Dial("tcp", "22", hostname, config)
+func executeCmd(command, port string, hostname string, config *ssh.ClientConfig) string {
+  client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port), config)
   if err != nil {
       log.Fatalf("unable to connect: %v", err)
   }
