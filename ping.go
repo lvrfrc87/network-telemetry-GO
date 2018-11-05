@@ -14,9 +14,9 @@ import (
     "strings"
 )
 
-type result struct {
-    f1 string
-    f2 string
+type results struct {
+    target string
+    output []string
 }
 
 func main() {
@@ -34,8 +34,7 @@ func main() {
   }
   // create go routine channel
   // https://tour.golang.org/concurrency/2
-  results := make(chan string, 10)
-
+  ch := make(chan results, 10)
   // read the private key
   key, err := ioutil.ReadFile("/Users/federicoolivieri/.ssh/id_rsa")
   if err != nil {
@@ -58,21 +57,20 @@ func main() {
     HostKeyCallback: ssh.InsecureIgnoreHostKey(),
     }
 
-
   for _, hostname := range hosts {
     go func(hostname string) {
-      results <- executeCmd(cmd, port, hostname, config)
+      ch <- executeCmd(cmd, port, hostname, config)
     }(hostname)
   }
   for i := 0; i < len(hosts); i++ {
       select {
-      case res := <-results:
+      case res := <- ch:
           fmt.Print(res)
         }
     }
 }
 
-func executeCmd(command, port string, hostname string, config *ssh.ClientConfig) (target string, splitOut []string) {
+func executeCmd(command, port string, hostname string, config *ssh.ClientConfig) results {
   client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port), config)
   if err != nil {
       log.Fatalf("unable to connect: %v", err)
@@ -87,7 +85,10 @@ func executeCmd(command, port string, hostname string, config *ssh.ClientConfig)
   session.Stdout = &stdoutBuf
   session.Run(command)
 
-  return hostname, strings.Split(stdoutBuf.String(), " ")
+  return results {
+    target: hostname,
+    output: strings.Split(stdoutBuf.String(), " "),
+  }
 }
 
 func influxdb(splitted_values []string, target string, region string) {

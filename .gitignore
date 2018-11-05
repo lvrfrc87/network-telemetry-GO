@@ -4,4 +4,5 @@
 !logo.png
 !.git/
 !ping.go
+!pingSingleThread.go
 !README.md
