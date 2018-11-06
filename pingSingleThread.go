@@ -13,6 +13,7 @@ import (
     "github.com/influxdata/influxdb/client/v2"
     "strings"
     "regexp"
+    "time"
 )
 
 type result struct {
@@ -57,19 +58,12 @@ func main() {
     // HostKeyCallback: ssh.FixedHostKey(hostKey)
     HostKeyCallback: ssh.InsecureIgnoreHostKey(),
     }
-  execCmd := runPing(cmd, port, hosts, config)
-  returned := jsonBody(execCmd.output)
-  fmt.Println(
-    "target", returned.target,
-    "region", returned.region,
-    "transmitted", returned.transmitted,
-    "received", returned.received,
-    "loss", returned.loss,
-    "min", returned.min,
-    "avg", returned.avg,
-    "max", returned.max,
-  )
-  influxdb(jsonBody(execCmd.output))
+
+  for {
+      execCmd := runPing(cmd, port, hosts, config)
+      influxdb(jsonBody(execCmd.output))
+      time.Sleep(3 * time.Second)
+    }
 }
 
 func runPing(command, port, hostname string, config *ssh.ClientConfig) result {
@@ -132,17 +126,15 @@ func influxdb(r body) {
   // Create a point and add to batch
 	tags := map[string]string{"target": r.target, "region": r.region}
   fields := map[string]interface{}{
-    "target", r.target,
-    "region", r.region,
-    "transmitted", r.transmitted,
-    "received", r.received,
-    "loss", r.loss,
-    "min", r.min,
-    "avg", r.avg,
-    "max", r.max,
+    "transmitted": r.transmitted,
+    "received": r.received,
+    "loss": r.loss,
+    "min": r.min,
+    "avg": r.avg,
+    "max": r.max,
 	}
 
-	pt, err := client.NewPoint("test_test", tags, fields, time.Now())
+	pt, err := client.NewPoint("test_go", tags, fields, time.Now())
 	if err != nil {
 		log.Fatal(err)
 	}
