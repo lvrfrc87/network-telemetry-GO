@@ -12,11 +12,20 @@ import (
     "log"
     "github.com/influxdata/influxdb/client/v2"
     "strings"
+    "regexp"
+    "time"
 )
 
-type results struct {
-    target string
-    output []string
+// json body structur
+type body struct {
+  target string
+  region string
+  transmitted string
+  received string
+  loss string
+  min string
+  avg string
+  max string
 }
 
 func main() {
@@ -34,19 +43,17 @@ func main() {
   }
   // create go routine channel
   // https://tour.golang.org/concurrency/2
-  ch := make(chan results, 10)
+  // ch := make(chan results, 10)
   // read the private key
   key, err := ioutil.ReadFile("/Users/federicoolivieri/.ssh/id_rsa")
   if err != nil {
     log.Fatalf("unable to read private key: %v", err)
     }
-
   // parse the prive key and create a ssh caller
   singer, err := ssh.ParsePrivateKey(key)
   if err != nil {
       log.Fatalf("unable to parse private key: %v", err)
   }
-
   // set-up ssh connection
   config := &ssh.ClientConfig{
     User: user,
@@ -57,20 +64,25 @@ func main() {
     HostKeyCallback: ssh.InsecureIgnoreHostKey(),
     }
 
+  for {
   for _, hostname := range hosts {
-    go func(hostname string) {
-      ch <- executeCmd(cmd, port, hostname, config)
-    }(hostname)
-  }
-  for i := 0; i < len(hosts); i++ {
-      select {
-      case res := <- ch:
-          fmt.Print(res)
-        }
+    go influxdb(jsonBody(runPing(cmd, port, hostname, config))) // {
+    //   ch <- influxdb(jsonBody(runPing(cmd, port, hosts, config)))
+    // }(hostname)
+  // }
+  // for i := 0; i < len(hosts); i++ {
+  //     select {
+  //     case res := <- ch:
+  //         fmt.Print(res)
+  //       }
+  //   }
+
     }
+  time.Sleep(3 * time.Second)
+  }
 }
 
-func executeCmd(command, port string, hostname string, config *ssh.ClientConfig) results {
+func runPing(command, port, hostname string, config *ssh.ClientConfig) []string {
   client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port), config)
   if err != nil {
       log.Fatalf("unable to connect: %v", err)
@@ -85,13 +97,25 @@ func executeCmd(command, port string, hostname string, config *ssh.ClientConfig)
   session.Stdout = &stdoutBuf
   session.Run(command)
 
-  return results {
-    target: hostname,
-    output: strings.Split(stdoutBuf.String(), " "),
+  return strings.Split(stdoutBuf.String(), " ")
+}
+
+func jsonBody(splittedValues []string) body {
+  re := regexp.MustCompile(`\d+\.?\d?`)
+  rttValues := strings.Split(splittedValues[29],"/")
+  return body {
+    target: splittedValues[1],
+    region: "foo",
+    transmitted: re.FindString(splittedValues[17]),
+    received: re.FindString(splittedValues[20]),
+    loss: re.FindString(splittedValues[22]),
+    min: re.FindString(rttValues[0]),
+    avg: re.FindString(rttValues[1]),
+    max: re.FindString(rttValues[2]),
   }
 }
 
-func influxdb(splitted_values []string, target string, region string) {
+func influxdb(r body) {
   // Create a new HTTPClient
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: "http://localhost:8086",
@@ -102,24 +126,40 @@ func influxdb(splitted_values []string, target string, region string) {
     log.Fatal("Failed to create db client session: %v", err)
   }
   defer c.Close()
-}
+
   // Create a new point batch
-	// bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-	// 	Database:  "network_telemetry",
-	// 	Precision: "s",
-	// })
-	// if err != nil {
-	// 	log.Fatal("Failed to create point batch: %v", err)
-	// }
-  //
-  // // Create a point and add to batch
-	// tags := map[string]string{"host": target, "region":region}
-  // if 'time=' in self.splitted_values[12]
-  // fields := map[string]interface{}{
-  //   "transmitted": splitted_values[19],
-  //   "received": splitted_values[22],
-  //   "loss": splitted_values[25],
-  //   "min": splitted_values[31].split("/")[0],
-  //   "avg": splitted_values[31].split("/")[1],
-  //   "max": splitted_values[31].split("/")[2],
-	// }
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig {
+		Database:  "network_telemetry",
+		Precision: "s",
+	})
+	if err != nil {
+		log.Fatal("Failed to create point batch: %v", err)
+	}
+
+  // Create a point and add to batch
+	tags := map[string]string{"target": r.target, "region": r.region}
+  fields := map[string]interface{}{
+    "transmitted": r.transmitted,
+    "received": r.received,
+    "loss": r.loss,
+    "min": r.min,
+    "avg": r.avg,
+    "max": r.max,
+	}
+
+	pt, err := client.NewPoint("ping_rtt", tags, fields, time.Now())
+	if err != nil {
+		log.Fatal(err)
+	}
+	bp.AddPoint(pt)
+
+	// Write the batch
+	if err := c.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+
+	// Close client resources
+	if err := c.Close(); err != nil {
+    		log.Fatal(err)
+	}
+}

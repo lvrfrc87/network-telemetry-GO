@@ -5,4 +5,5 @@
 !.git/
 !ping.go
 !pingSingleThread.go
+!pingMultiThread.go
 !README.md
