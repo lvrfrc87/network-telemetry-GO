@@ -34,10 +34,10 @@ type body struct {
 
 func main() {
   // define variables
-  cmd := "ping -c 1 10.78.65.1"
+  cmd := "ping -c 1 8.8.8.8"
   port := "22"
-  user := "core"
-  hosts := "app1.net.awsieprod2.linsys.tmcs"
+  user := "$USER"
+  hosts := "192.168.1.254"
 
   // read the private key
   key, err := ioutil.ReadFile("/Users/federicoolivieri/.ssh/id_rsa")
