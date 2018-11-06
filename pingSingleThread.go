@@ -69,6 +69,7 @@ func main() {
     "avg", returned.avg,
     "max", returned.max,
   )
+  influxdb(jsonBody(execCmd.output))
 }
 
 func runPing(command, port, hostname string, config *ssh.ClientConfig) result {
@@ -107,7 +108,7 @@ func jsonBody(splittedValues []string) body {
   }
 }
 
-func influxdb(, target, region string) {
+func influxdb(r body) {
   // Create a new HTTPClient
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: "http://localhost:8086",
@@ -129,17 +130,16 @@ func influxdb(, target, region string) {
 	}
 
   // Create a point and add to batch
-	tags := map[string]string{"host": target, "region":region}
-  if 'time=' in self.splittedValues[12]
+	tags := map[string]string{"target": r.target, "region": r.region}
   fields := map[string]interface{}{
-    "target", returned.target,
-    "region", returned.region,
-    "transmitted", returned.transmitted,
-    "received", returned.received,
-    "loss", returned.loss,
-    "min", returned.min,
-    "avg", returned.avg,
-    "max", returned.max,
+    "target", r.target,
+    "region", r.region,
+    "transmitted", r.transmitted,
+    "received", r.received,
+    "loss", r.loss,
+    "min", r.min,
+    "avg", r.avg,
+    "max", r.max,
 	}
 
 	pt, err := client.NewPoint("test_test", tags, fields, time.Now())
