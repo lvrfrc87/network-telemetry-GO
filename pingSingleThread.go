@@ -16,11 +16,6 @@ import (
     "time"
 )
 
-type result struct {
-    target string
-    output []string
-}
-
 type body struct {
   target string
   region string
@@ -34,10 +29,10 @@ type body struct {
 
 func main() {
   // define variables
-  cmd := "ping -c 1 8.8.8.8"
+  cmd := "ping -c 1 10.78.65.1"
   port := "22"
-  user := "$USER"
-  hosts := "192.168.1.254"
+  user := "core"
+  hosts := "app1.net.awsieprod2.linsys.tmcs"
 
   // read the private key
   key, err := ioutil.ReadFile("/Users/federicoolivieri/.ssh/id_rsa")
@@ -61,12 +56,12 @@ func main() {
 
   for {
       execCmd := runPing(cmd, port, hosts, config)
-      influxdb(jsonBody(execCmd.output))
+      influxdb(jsonBody(execCmd))
       time.Sleep(3 * time.Second)
     }
 }
 
-func runPing(command, port, hostname string, config *ssh.ClientConfig) result {
+func runPing(command, port, hostname string, config *ssh.ClientConfig) []string {
   client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port), config)
   if err != nil {
       log.Fatalf("unable to connect: %v", err)
@@ -81,10 +76,7 @@ func runPing(command, port, hostname string, config *ssh.ClientConfig) result {
   session.Stdout = &stdoutBuf
   session.Run(command)
 
-  return result {
-    target: hostname,
-    output: strings.Split(stdoutBuf.String(), " "),
-  }
+  return strings.Split(stdoutBuf.String(), " ")
 }
 
 func jsonBody(splittedValues []string) body {
