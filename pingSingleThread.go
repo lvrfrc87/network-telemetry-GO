@@ -10,13 +10,25 @@ import (
     "golang.org/x/crypto/ssh"
     "io/ioutil"
     "log"
-    // "github.com/influxdata/influxdb/client/v2"
+    "github.com/influxdata/influxdb/client/v2"
     "strings"
+    "regexp"
 )
 
 type result struct {
     target string
-    output string
+    output []string
+}
+
+type body struct {
+  target string
+  region string
+  transmitted string
+  received string
+  loss string
+  min string
+  avg string
+  max string
 }
 
 func main() {
@@ -45,12 +57,21 @@ func main() {
     // HostKeyCallback: ssh.FixedHostKey(hostKey)
     HostKeyCallback: ssh.InsecureIgnoreHostKey(),
     }
-
-  s := result.target
-  fmt.Println(s)
+  execCmd := runPing(cmd, port, hosts, config)
+  returned := jsonBody(execCmd.output)
+  fmt.Println(
+    "target", returned.target,
+    "region", returned.region,
+    "transmitted", returned.transmitted,
+    "received", returned.received,
+    "loss", returned.loss,
+    "min", returned.min,
+    "avg", returned.avg,
+    "max", returned.max,
+  )
 }
 
-func executeCmd (command, port string, hostname string, config *ssh.ClientConfig) result{
+func runPing(command, port, hostname string, config *ssh.ClientConfig) result {
   client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port), config)
   if err != nil {
       log.Fatalf("unable to connect: %v", err)
@@ -69,4 +90,71 @@ func executeCmd (command, port string, hostname string, config *ssh.ClientConfig
     target: hostname,
     output: strings.Split(stdoutBuf.String(), " "),
   }
+}
+
+func jsonBody(splittedValues []string) body {
+  re := regexp.MustCompile(`\d+\.?\d?`)
+  rttValues := strings.Split(splittedValues[29],"/")
+  return body {
+    target: splittedValues[1],
+    region: "foo",
+    transmitted: re.FindString(splittedValues[17]),
+    received: re.FindString(splittedValues[20]),
+    loss: re.FindString(splittedValues[22]),
+    min: re.FindString(rttValues[0]),
+    avg: re.FindString(rttValues[1]),
+    max: re.FindString(rttValues[2]),
+  }
+}
+
+func influxdb(, target, region string) {
+  // Create a new HTTPClient
+	c, err := client.NewHTTPClient(client.HTTPConfig{
+		Addr: "http://localhost:8086",
+		Username: "root",
+		Password: "supersecretpassword",
+	})
+  if err != nil {
+    log.Fatal("Failed to create db client session: %v", err)
+  }
+  defer c.Close()
+
+  // Create a new point batch
+	bp, err := client.NewBatchPoints(client.BatchPointsConfig {
+		Database:  "network_telemetry",
+		Precision: "s",
+	})
+	if err != nil {
+		log.Fatal("Failed to create point batch: %v", err)
+	}
+
+  // Create a point and add to batch
+	tags := map[string]string{"host": target, "region":region}
+  if 'time=' in self.splittedValues[12]
+  fields := map[string]interface{}{
+    "target", returned.target,
+    "region", returned.region,
+    "transmitted", returned.transmitted,
+    "received", returned.received,
+    "loss", returned.loss,
+    "min", returned.min,
+    "avg", returned.avg,
+    "max", returned.max,
+	}
+
+	pt, err := client.NewPoint("test_test", tags, fields, time.Now())
+	if err != nil {
+		log.Fatal(err)
+	}
+	bp.AddPoint(pt)
+
+	// Write the batch
+	if err := c.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+
+	// Close client resources
+	if err := c.Close(); err != nil {
+    		log.Fatal(err)
+	}
 }
