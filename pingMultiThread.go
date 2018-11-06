@@ -30,21 +30,16 @@ type body struct {
 
 func main() {
   // define variables
-  cmd := "ping -c 1 10.78.65.1"
+  targetIps := [] string {
+    "10.63.65.1",
+    "10.66.65.1",
+    "10.70.65.1",
+    "10.78.65.1",
+    }
   port := "22"
   user := "core"
-  hosts := []string {
-    "app1.net.awsieprod2.linsys.tmcs",
-    "app2.net.awsieprod2.linsys.tmcs",
-    "app3.net.awsieprod2.linsys.tmcs",
-    "app1.net.awsdeprod2.linsys.tmcs",
-    "app2.net.awsdeprod2.linsys.tmcs",
-    "app3.net.awsdeprod2.linsys.tmcs",
-  }
-  // create go routine channel
-  // https://tour.golang.org/concurrency/2
-  // ch := make(chan results, 10)
-  // read the private key
+  hostname := "app1.net.awsieprod2.linsys.tmcs"
+
   key, err := ioutil.ReadFile("/Users/federicoolivieri/.ssh/id_rsa")
   if err != nil {
     log.Fatalf("unable to read private key: %v", err)
@@ -65,24 +60,14 @@ func main() {
     }
 
   for {
-  for _, hostname := range hosts {
-    go influxdb(jsonBody(runPing(cmd, port, hostname, config))) // {
-    //   ch <- influxdb(jsonBody(runPing(cmd, port, hosts, config)))
-    // }(hostname)
-  // }
-  // for i := 0; i < len(hosts); i++ {
-  //     select {
-  //     case res := <- ch:
-  //         fmt.Print(res)
-  //       }
-  //   }
-
+    for _, ip := range targetIps {
+      go influxdb(jsonBody(runPing(ip, port, hostname, config))) // {
+      }
+    time.Sleep(3 * time.Second)
     }
-  time.Sleep(3 * time.Second)
-  }
 }
 
-func runPing(command, port, hostname string, config *ssh.ClientConfig) []string {
+func runPing(ip, port, hostname string, config *ssh.ClientConfig) []string {
   client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", hostname, port), config)
   if err != nil {
       log.Fatalf("unable to connect: %v", err)
@@ -95,7 +80,7 @@ func runPing(command, port, hostname string, config *ssh.ClientConfig) []string 
 
   var stdoutBuf bytes.Buffer
   session.Stdout = &stdoutBuf
-  session.Run(command)
+  session.Run(fmt.Sprintf("ping -c 1 -w 1 %s", ip))
 
   return strings.Split(stdoutBuf.String(), " ")
 }
@@ -105,7 +90,7 @@ func jsonBody(splittedValues []string) body {
   rttValues := strings.Split(splittedValues[29],"/")
   return body {
     target: splittedValues[1],
-    region: "foo",
+    region: "bar",
     transmitted: re.FindString(splittedValues[17]),
     received: re.FindString(splittedValues[20]),
     loss: re.FindString(splittedValues[22]),
@@ -147,7 +132,7 @@ func influxdb(r body) {
     "max": r.max,
 	}
 
-	pt, err := client.NewPoint("ping_rtt", tags, fields, time.Now())
+	pt, err := client.NewPoint("go_rtt_m", tags, fields, time.Now())
 	if err != nil {
 		log.Fatal(err)
 	}
