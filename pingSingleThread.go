@@ -126,7 +126,7 @@ func influxdb(r body) {
     "max": r.max,
 	}
 
-	pt, err := client.NewPoint("test_go", tags, fields, time.Now())
+	pt, err := client.NewPoint("ping_rtt", tags, fields, time.Now())
 	if err != nil {
 		log.Fatal(err)
 	}
