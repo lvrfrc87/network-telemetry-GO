@@ -1,0 +1,16 @@
+---
+region: eu-central-1b
+targets:
+  - ss.shared.ams1.websys.tmcs
+  - edb.shared.ams1.websys.tmcs
+  - atl1.shared.ams1.websys.tmcs
+  - tdb3.tmol.ams0.websys.tmcs
+  - atl.tmol.euash1.websys.tmcs
+  - 10.78.65.1    # AMS
+  - 10.63.65.1    # LON
+  - 10.70.65.1    # PHX
+  - 10.66.65.1    # ASH
+  - 10.38.17.65   # MEL
+  - 10.38.69.225  # PRT
+  - 10.226.234.116  # WEST-1B SOLARWIND POLLING ENGINE
+  - 10.227.236.4    # CENTRAL-1B SOLARWIND POLLING ENGINE
