@@ -6,4 +6,5 @@
 !ping.go
 !pingSingleThread.go
 !pingMultiThread.go
+!targets.yaml
 !README.md

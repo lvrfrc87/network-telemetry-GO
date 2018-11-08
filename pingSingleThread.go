@@ -27,6 +27,11 @@ type body struct {
   max string
 }
 
+type yamlTargets struct {
+  Region string
+  Targets []string
+}
+
 func main() {
   // define variables
   cmd := "ping -c 1 10.78.65.1"

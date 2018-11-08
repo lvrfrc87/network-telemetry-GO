@@ -79,6 +79,7 @@ import (
     "strings"
     "regexp"
     "time"
+    "gopkg.in/yaml.v2"
 )
 
 // json body structur
@@ -93,16 +94,23 @@ type body struct {
   max string
 }
 
+type yamlTargets struct {
+  Region string
+  Targets []string
+}
+
 func main() {
   // define variables
-  targetIps := [] string {
-    "10.63.65.1",
-    "10.66.65.1",
-    "10.70.65.1",
-    "10.78.65.1",
-    "10.226.234.116",
-    "10.227.236.4",
-    }
+  var y yamlTargets
+  // region := y.Region
+  // targetIps := [] string {
+  //   "10.63.65.1",
+  //   "10.66.65.1",
+  //   "10.70.65.1",
+  //   "10.78.65.1",
+  //   "10.226.234.116",
+  //   "10.227.236.4",
+  //   }
   port := "22"
   user := "core"
   hostname := "app1.net.awsieprod2.linsys.tmcs"
@@ -126,12 +134,34 @@ func main() {
     HostKeyCallback: ssh.InsecureIgnoreHostKey(),
     }
 
+    yamlFile, err := ioutil.ReadFile("./targets.yaml")
+    if err != nil {
+        log.Printf("yaml file get err %v ", err)
+    }
+    err = yaml.Unmarshal(yamlFile, &y)
+    if err != nil {
+        log.Fatalf("Unmarshal: %v", err)
+    }
   for {
-    for _, ip := range targetIps {
-      go influxdb(jsonBody(runPing(ip, port, hostname, config))) // {
+    for _, ip := range y.Targets {
+      go influxdb(jsonBody(runPing(ip, port, hostname, config), y.Region)) // {
       }
     time.Sleep(3 * time.Second)
     }
+}
+
+func (y *yamlTargets) getTargetList() *yamlTargets {
+
+    yamlFile, err := ioutil.ReadFile("targets.yaml")
+    if err != nil {
+        log.Printf("yaml file get err %v ", err)
+    }
+    err = yaml.Unmarshal(yamlFile, y)
+    if err != nil {
+        log.Fatalf("Unmarshal: %v", err)
+    }
+
+    return y
 }
 
 func runPing(ip, port, hostname string, config *ssh.ClientConfig) []string {
@@ -152,13 +182,13 @@ func runPing(ip, port, hostname string, config *ssh.ClientConfig) []string {
   return strings.Split(stdoutBuf.String(), " ")
 }
 
-func jsonBody(splittedValues []string) body {
+func jsonBody(splittedValues []string, region string) body {
   re := regexp.MustCompile(`\d+\.?\d?`)
   if strings.Contains(splittedValues[12], "time=") {
   rttValues := strings.Split(splittedValues[29],"/")
   return body {
     target: splittedValues[1],
-    region: "bar",
+    region: region,
     transmitted: re.FindString(splittedValues[17]),
     received: re.FindString(splittedValues[20]),
     loss: re.FindString(splittedValues[22]),
@@ -169,7 +199,7 @@ func jsonBody(splittedValues []string) body {
   } else {
     return body {
       target: splittedValues[1],
-      region: "bar",
+      region: region,
       transmitted: re.FindString(splittedValues[10]),
       received: re.FindString(splittedValues[13]),
       loss: re.FindString(splittedValues[15]),
