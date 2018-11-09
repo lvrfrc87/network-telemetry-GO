@@ -78,7 +78,7 @@ type Body struct {
   Stddev float64
 }
 
-/* json API body for MAC ping comman
+/* json API body for MAC OS ping comman
 based on the below struct:
 
 type Body struct {

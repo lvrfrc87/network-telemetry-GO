@@ -3,16 +3,11 @@ package main
 import (
     "log"
     "github.com/influxdata/influxdb/client/v2"
-    // "reflect"
-    "strings"
     "time"
-    "os/exec"
-    "os"
     "ping/yaml"
-    jm "ping/JsonBodyMAC"
-    // "fmt"
+    json "ping/JsonBodyMAC"
+    ping "ping/RunMac"
 )
-
 
 func main() {
   // while loop
@@ -21,21 +16,13 @@ func main() {
     for _, ip := range yaml.YamlReader().Targets {
       // go routine
       // fmt.Println(reflect.TypeOf(jm.JsonBody(runPing(ip), yaml.YamlReader().Region)))
-      go influxdb(jm.JsonBody(runPing(ip), yaml.YamlReader().Region))
+      go influxdb(json.JsonBody(ping.RunPing(ip), yaml.YamlReader().Region))
       }
     time.Sleep(3 * time.Second)
     }
   }
 
-func runPing(ip string) []string {
-  output, err := exec.Command("ping", "-c", "1", ip).CombinedOutput()
-  if err != nil {
-    os.Stderr.WriteString(err.Error())
-  }
-  return strings.Split(string(output), " ")
-}
-
-func influxdb(r jm.Body) {
+func influxdb(r json.Body) {
   // Create a new HTTPClient
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: "http://localhost:8086",

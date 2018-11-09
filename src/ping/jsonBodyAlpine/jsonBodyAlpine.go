@@ -62,22 +62,45 @@ rtt
 18 time
 19 0ms
 */
-package jsonBodyAlpine
+package JsonBodyAlpine
+
+import (
+    "strings"
+    "regexp"
+    "strconv"
+)
 
 // json body struct
 type Body struct {
-  target string
-  region string
-  transmitted float64
-  received float64
-  loss float64
-  min float64
-  avg float64
-  max float64
+  Target string
+  Region string
+  Transmitted float64
+  Received float64
+  Loss float64
+  Min float64
+  Avg float64
+  Max float64
+  Stddev float64
 }
 
-func jsonBody(splittedValues []string, region string) body {
+/* json API body for Linux Alpine ping comman
+based on the below struct:
+
+type Body struct {
+  Target string
+  Region string
+  Transmitted float64
+  Received float64
+  Loss float64
+  Min float64
+  Avg float64
+  Max float64
+  Stddev float64
+}
+*/
+func JsonBody(splittedValues []string, region string) Body {
   re := regexp.MustCompile(`\d+\.?\d?`)
+  if strings.Contains(splittedValues[12], "time=") {
   rttValues := strings.Split(splittedValues[29],"/")
   transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[17]),64)
   received, _ := strconv.ParseFloat(re.FindString(splittedValues[20]),64)
@@ -85,27 +108,31 @@ func jsonBody(splittedValues []string, region string) body {
   min, _ := strconv.ParseFloat(re.FindString(rttValues[0]),64)
   avg, _ := strconv.ParseFloat(re.FindString(rttValues[1]),64)
   max, _ := strconv.ParseFloat(re.FindString(rttValues[2]),64)
-  if strings.Contains(splittedValues[12], "time=") {
-  return body {
-    target: string(splittedValues[1]),
-    region: string(region),
-    transmitted: transmitted,
-    received: received,
-    loss: loss,
-    min: min,
-    avg: avg,
-    max: max,
+  return Body {
+    Target: string(splittedValues[1]),
+    Region: string(region),
+    Transmitted: transmitted,
+    Received: received,
+    Loss: loss,
+    Min: min,
+    Avg: avg,
+    Max: max,
+    Stddev: float64(0),
     }
   } else {
-    return body {
-      target: string(splittedValues[1]),
-      region: string(region),
-      transmitted: transmitted,
-      received: received,
-      loss: loss,
-      min: float64(0),
-      avg: float64(0),
-      max: float64(0),
+    transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[10]),64)
+    received, _ := strconv.ParseFloat(re.FindString(splittedValues[13]),64)
+    loss, _ := strconv.ParseFloat(re.FindString(splittedValues[15]),64)
+    return Body {
+      Target: string(splittedValues[1]),
+      Region: string(region),
+      Transmitted: transmitted,
+      Received: received,
+      Loss: loss,
+      Min: float64(0),
+      Avg: float64(0),
+      Max: float64(0),
+      Stddev: float64(0),
     }
   }
 }
