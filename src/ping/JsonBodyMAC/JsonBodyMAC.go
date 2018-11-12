@@ -6,34 +6,33 @@
 3 56
 4 data
 5 bytes
-64
-6 bytes
-7 from
-8 10.75.239.173:
-9 icmp_seq=0
-10 ttl=250
-11 time=24.537
-12 ms
-
----
-13 ss.shared.ams1.websys.tmcs
-14 ping
-15 statistics
-16 ---
-1
-17 packets
-18 transmitted,
+6 64
+7 bytes
+8 from
+9 10.75.239.173:
+10 icmp_seq=0
+11 ttl=250
+12 time=9.194
+13 ms
+14 ---
+15 ss.shared.ams1.websys.tmcs
+16 ping
+17 statistics
+18 ---
 19 1
 20 packets
-21 received,
-22 0.0%
-23 packet
-24 loss
-round-trip
-25 min/avg/max/stddev
-26 =
-27 24.537/24.537/24.537/0.000
-28 ms
+21 transmitted,
+22 1
+23 packets
+24 received,
+25 0.0%
+26 packet
+27 loss
+28 round-trip
+29 min/avg/max/stddev
+30 =
+31 9.194/9.194/9.194/0.000
+32 ms
 
 ### Ping failed ###
 0 PING
@@ -42,21 +41,20 @@ round-trip
 3 56
 4 data
 5 bytes
-
----
-6 1.2.3.4
-7 ping
-8 statistics
-9 ---
-1
-10 packets
-11 transmitted,
-12 0
-13 packets
-14 received,
-15 100.0%
-16 packet
-17 loss
+6 ---
+7 1.2.3.4
+8 ping
+9 statistics
+10 ---
+11 1
+12 packets
+13 transmitted,
+14 0
+15 packets
+16 received,
+17 100.0%
+18 packet
+19 loss
 */
 package JsonBodyMAC
 
@@ -95,11 +93,11 @@ type Body struct {
 */
 func JsonBody(splittedValues []string, region string) Body {
   re := regexp.MustCompile(`\d+\.?\d?`)
-  if strings.Contains(splittedValues[11], "time=") {
-    rttValues := strings.Split(splittedValues[27],"/")
-    transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[16]),64)
-    received, _ := strconv.ParseFloat(re.FindString(splittedValues[19]),64)
-    loss, _ := strconv.ParseFloat(re.FindString(splittedValues[22]),64)
+  if strings.Contains(splittedValues[12], "time=") {
+    rttValues := strings.Split(splittedValues[31],"/")
+    transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[19]),64)
+    received, _ := strconv.ParseFloat(re.FindString(splittedValues[22]),64)
+    loss, _ := strconv.ParseFloat(re.FindString(splittedValues[25]),64)
     min, _ := strconv.ParseFloat(re.FindString(rttValues[0]),64)
     avg, _ := strconv.ParseFloat(re.FindString(rttValues[1]),64)
     max, _ := strconv.ParseFloat(re.FindString(rttValues[2]),64)
@@ -116,9 +114,9 @@ func JsonBody(splittedValues []string, region string) Body {
       Stddev: stddev,
       }
   } else {
-    transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[9]),64)
-    received, _ := strconv.ParseFloat(re.FindString(splittedValues[12]),64)
-    loss, _ := strconv.ParseFloat(re.FindString(splittedValues[15]),64)
+    transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[11]),64)
+    received, _ := strconv.ParseFloat(re.FindString(splittedValues[14]),64)
+    loss, _ := strconv.ParseFloat(re.FindString(splittedValues[17]),64)
     return Body {
       Target: string(splittedValues[1]),
       Region: string(region),

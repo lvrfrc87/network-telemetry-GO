@@ -15,5 +15,5 @@ func RunPing(ip string) []string {
   if err != nil {
     os.Stderr.WriteString(err.Error())
   }
-  return strings.Split(string(output), " ")
+  return strings.Fields(string(output))
 }

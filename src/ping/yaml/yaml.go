@@ -19,7 +19,7 @@ type yamlTargets struct {
   Targets []string
 }
 */
-func YamlReader() YamlTargets{
+func YamlReader() YamlTargets {
   // define variables
   var y YamlTargets
   // open YAML file
@@ -30,7 +30,7 @@ func YamlReader() YamlTargets{
   // read YAML file
   err = yaml.Unmarshal(yamlFile, &y)
   if err != nil {
-      log.Fatalf("Unmarshal: %v", err)
+      log.Fatalf("unmarshal error: %v", err)
   }
   return y
 }
