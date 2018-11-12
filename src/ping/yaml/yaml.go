@@ -23,7 +23,7 @@ func YamlReader() YamlTargets {
   // define variables
   var y YamlTargets
   // open YAML file
-  yamlFile, err := ioutil.ReadFile("../../var/targets.yaml")
+  yamlFile, err := ioutil.ReadFile("var/targets.yaml")
   if err != nil {
       log.Printf("yaml file get err %v ", err)
   }

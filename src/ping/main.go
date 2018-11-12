@@ -16,7 +16,6 @@ func main() {
 		// loop through target list
 		for _, ip := range yaml.YamlReader().Targets {
 			// go routine
-			// fmt.Println(reflect.TypeOf(jm.JsonBody(runPing(ip), yaml.YamlReader().Region)))
 			go influxdb(json.JsonBody(ping.RunPing(ip), yaml.YamlReader().Region))
 		}
 		time.Sleep(1 * time.Second)

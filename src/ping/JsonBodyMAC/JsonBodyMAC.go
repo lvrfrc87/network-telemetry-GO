@@ -92,7 +92,7 @@ type Body struct {
 }
 */
 func JsonBody(splittedValues []string, region string) Body {
-  re := regexp.MustCompile(`\d+\.?\d?`)
+  re := regexp.MustCompile(`\d+\.?\d+?`)
   if strings.Contains(splittedValues[12], "time=") {
     rttValues := strings.Split(splittedValues[31],"/")
     transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[19]),64)
