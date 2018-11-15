@@ -21,7 +21,7 @@ func main() {
 
 func influxdb(r json.Body) {
 	// Create a new HTTPClient
-	dbList := []string{"app1.net.awsieprod2.linsys.tmcs", "db1.telemetry.netams1.netsys.tmcs",}
+	dbList := []string{"db",}
 	for _, db := range dbList {
 		// go routine
 		go writeDb(db, r)
