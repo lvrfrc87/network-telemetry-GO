@@ -3,25 +3,28 @@ package main
 import (
 	"github.com/influxdata/influxdb/client/v2"
 	"log"
-	json "ping/JsonBodyMAC"
-	ping "ping/RunMac"
+	json "ping/json_parser_alpine"
+	ping "ping/ping_cmd_alpine"
+	credpass "ping/credentials"
 	"ping/yaml"
 	"time"
   "fmt"
 )
 
 func main() {
+	targets := yaml.YamlReader().Targets
+	region := yaml.YamlReader().Region
 	for {
-		for _, ip := range yaml.YamlReader().Targets {
+		for _, ip := range targets {
 			// go routine
-			go influxdb(json.JsonBody(ping.RunPing(ip), yaml.YamlReader().Region))
+			go influxdb(json.JsonBody(ping.RunPing(ip), region))
 		}
 	}
 }
 
 func influxdb(r json.Body) {
 	// Create a new HTTPClient
-	dbList := []string{"db",}
+	dbList := []string{"app1.net.awsieprod2.linsys.tmcs", "db1.telemetry.netams1.netsys.tmcs",}
 	for _, db := range dbList {
 		// go routine
 		go writeDb(db, r)
@@ -29,10 +32,11 @@ func influxdb(r json.Body) {
 }
 
 func writeDb(db string, r json.Body) {
+	instance := credpass.Load(db)
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     fmt.Sprintf("http://%s:8086", db),
-		Username: "root",
-		Password: "supersecretpassword",
+		Username: instance.CredPass("username"),
+		Password: instance.CredPass("password"),
 	})
 	if err != nil {
 		log.Fatalf("Failed to create %s client session: %v", db, err)
