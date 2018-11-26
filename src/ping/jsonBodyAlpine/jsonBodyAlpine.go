@@ -98,7 +98,7 @@ type Body struct {
   Stddev float64
 }
 */
-func JsonBody(splittedValues []string, region string) Body {
+func JsonBody(splittedValues []string, region string) *Body {
   re := regexp.MustCompile(`\d+\.?\d?`)
   if strings.Contains(splittedValues[12], "time=") {
   rttValues := strings.Split(splittedValues[29],"/")
@@ -108,7 +108,7 @@ func JsonBody(splittedValues []string, region string) Body {
   min, _ := strconv.ParseFloat(re.FindString(rttValues[0]),64)
   avg, _ := strconv.ParseFloat(re.FindString(rttValues[1]),64)
   max, _ := strconv.ParseFloat(re.FindString(rttValues[2]),64)
-  return Body {
+  return &Body {
     Target: string(splittedValues[1]),
     Region: string(region),
     Transmitted: transmitted,
@@ -123,7 +123,7 @@ func JsonBody(splittedValues []string, region string) Body {
     transmitted, _ := strconv.ParseFloat(re.FindString(splittedValues[10]),64)
     received, _ := strconv.ParseFloat(re.FindString(splittedValues[13]),64)
     loss, _ := strconv.ParseFloat(re.FindString(splittedValues[15]),64)
-    return Body {
+    return &Body {
       Target: string(splittedValues[1]),
       Region: string(region),
       Transmitted: transmitted,
